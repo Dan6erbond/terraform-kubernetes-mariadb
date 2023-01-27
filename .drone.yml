@@ -1,0 +1,25 @@
+kind: pipeline
+type: kubernetes
+name: bump version and generate changelog
+
+steps:
+  - name: standard-version
+    image: node:19
+    environment:
+      GIT_USERNAME:
+        from_secret: git_username
+      GIT_TOKEN:
+        from_secret: git_token
+    commands:
+      - git config --global user.email "moravrav@gmail.com"
+      - git config --global user.name "RaviAnand Mohabir"
+      - git config --global url."https://$GIT_USERNAME:$GIT_TOKEN@gitea.ravianand.me/".insteadOf "https://gitea.ravianand.me/"
+      - npm i -g standard-version
+      - standard-version
+      - git push --follow-tags origin main
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
