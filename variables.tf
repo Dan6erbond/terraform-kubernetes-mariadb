@@ -34,6 +34,18 @@ variable "mariadb_db" {
   sensitive   = true
 }
 
+variable "mariadb_conf" {
+  description = "MariaDB configuration file to enable custom configuration"
+  type        = string
+  default     = ""
+}
+
+variable "mariadb_flags" {
+  description = "Additional flags to pass to MariaDB startup"
+  type        = string
+  default     = ""
+}
+
 variable "stateful_set_name" {
   description = "Name of StatefulSet"
   type        = string

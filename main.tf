@@ -81,6 +81,10 @@ resource "kubernetes_stateful_set" "mariadb" {
               }
             }
           }
+          env {
+            name  = "MARIADB_EXTRA_FLAGS"
+            value = var.mariadb_flags
+          }
           port {
             name           = "tcp-mariadb"
             container_port = local.port
@@ -88,6 +92,23 @@ resource "kubernetes_stateful_set" "mariadb" {
           volume_mount {
             name       = "data"
             mount_path = "/bitnami/mariadb"
+          }
+          dynamic "volume_mount" {
+            for_each = var.mariadb_conf != "" ? toset(["config"]) : toset([])
+            content {
+              name       = volume_mount.value
+              mount_path = "/opt/bitnami/mariadb/conf/my_custom.cnf"
+              sub_path   = "my_custom.cnf"
+            }
+          }
+        }
+        dynamic "volume" {
+          for_each = var.mariadb_conf != "" ? toset(["config"]) : toset([])
+          content {
+            name = volume.value
+            config_map {
+              name = kubernetes_config_map.mariadb_conf[volume.key].metadata.0.name
+            }
           }
         }
       }
@@ -154,5 +175,16 @@ resource "kubernetes_config_map" "mariadb" {
     MARIADB_ROOT_USER    = var.mariadb_root_user
     MARIADB_USER         = var.mariadb_user
     MARIADB_DATABASE     = var.mariadb_db
+  }
+}
+
+resource "kubernetes_config_map" "mariadb_conf" {
+  for_each = var.mariadb_conf != "" ? toset(["config"]) : toset([])
+  metadata {
+    name      = "mariadb-conf"
+    namespace = var.namespace
+  }
+  data = {
+    "my_custom.cnf" = var.mariadb_conf
   }
 }
